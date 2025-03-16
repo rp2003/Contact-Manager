@@ -1,12 +1,16 @@
 // NOTE: As we are going to use mongodb which returns a promise so we have to use async in all functions. So in async function we need a try catch to handle a error to avoid doing it for all functions. we use middleware i.e. express async handler
 const asyncHandler= require("express-async-handler");
 
+// imports the contact schema which is further used to apply crud commands on the database
+const Contact= require("../models/contactModel");
+
 //@desc Get all contacts
 // @route Get /api/contacts
 //@access public
 
 const getContact= asyncHandler(async(req,res)=>{
-    res.status(200).json({message: "Get all contacts"});
+    const contacts= await Contact.find();
+    res.status(200).json(contacts);
 });
 
 //@desc Post contact
@@ -21,7 +25,13 @@ const createContact= asyncHandler(async(req,res)=>{
         res.status(400);
         throw new Error("All fields are mandatory.")
     }
-    res.status(201).json({message: "create contacts"});
+    // if key and the value are same then we don't need name= name as we have destructed it in above line const {name, email,phone} =req.body;
+    const contact = await Contact.create({
+        name,
+        email,
+        phone,
+    })
+    res.status(201).json(contact);
 });
 
 //@desc Get contact by ID
@@ -29,7 +39,17 @@ const createContact= asyncHandler(async(req,res)=>{
 //@access public
 
 const getContactByID = asyncHandler(async (req,res)=>{
-    res.status(200).json({message: `get contact by id ${req.params.id}`});
+    const contact= await Contact.findById(req.params.id);
+    
+    if (!contact){
+        // console.log("Contact not found");
+        // res.status(404);
+        // throw new Error("Contact Not Found");
+        const error = new Error("Contact Not Found");   // Create an error object
+        error.statusCode = 404;                         // Attach statusCode directly to the error
+        throw error;                                    // Throw the customized error
+    }
+    res.status(200).json(contact);
 });
 
 
@@ -37,7 +57,19 @@ const getContactByID = asyncHandler(async (req,res)=>{
 //@route Put /ap/contacts/:id
 //@access public
 const updateContact = asyncHandler( async (req,res)=>{
-    res.status(200).json({message: `update contacts ${req.params.id}`});
+    const contact = await Contact.findById(req.params.id);
+    if(!contact)
+    {
+        res.status(404);
+        throw new Error("Contact not found");
+    }
+
+    const updatedContact= await Contact.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    );
+    res.status(200).json(updatedContact);
 });
 
 
@@ -45,7 +77,14 @@ const updateContact = asyncHandler( async (req,res)=>{
 //@route delete /ap/contacts/:id
 //@access public
 const deleteContact = asyncHandler(async (req,res)=>{
-    res.status(200).json({message: `delete contacts ${req.params.id}`});
+    const contact = await Contact.findById(req.params.id);
+    if(!contact)
+    {
+        res.status(404);
+        throw new Error("Contact not found");
+    }
+    await Contact.deleteOne()
+    res.status(200).json(contact);
 });
 
 
