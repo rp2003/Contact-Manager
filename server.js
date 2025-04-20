@@ -13,6 +13,8 @@ const port= process.env.PORT||5000;
 app.use(express.json());    // handles the json data that client gave.
 
 app.use("/api/contacts", require("./routes/contactRoutes"))
+
+app.use("/api/users", require("./routes/userRoutes")) // Added a route for user Authentication
 app.use(errorHandler); // imported it
 
 app.listen(port,()=>{
